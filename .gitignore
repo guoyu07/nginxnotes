@@ -60,6 +60,8 @@ acs-*.bib
 #(r)(e)ledmac/(r)(e)ledpar
 *.end
 *.?end
+#(e)ledmac/(e)ledpar
+*.end
 *.[1-9]
 *.[1-9][0-9]
 *.[1-9][0-9][0-9]
@@ -104,6 +106,7 @@ acs-*.bib
 
 # minitoc
 *.maf
+<<<<<<< HEAD
 *.mlf
 *.mlt
 *.mtc
@@ -133,6 +136,7 @@ _minted*
 *.sympy
 sympy-plots-for-*.tex/
 
+<<<<<<< HEAD
 # pdfcomment
 *.upa
 *.upb
