@@ -1,0 +1,251 @@
+\part{Core}
+
+
+\chapter{Overview}
+
+
+\begin{lstlisting}
+user www www;
+error_log /var/log/nginx/error.log info;
+pid /var/run/nginx.pid;
+
+worker_processes 4;
+worker_priority 0;
+worker_cpu_affinity 0001 0010 0100 1000;
+#worker_rlimit_core 
+#worker_rlimit_nofile
+#working_directory
+
+daemon on;
+master_process on;
+debug_points stop;
+
+env MALLOC_OPTIONS;
+env PERL5LIB=/data/site/modules;
+env OPENSSL_ALLOW_PROXY_CERTS=1;
+
+#ssl_engine 
+
+#thread_pool default threads=32 max_queue=65536;
+timer_resolution 100ms;
+
+load_module modules/ngx_mail_module.so;
+
+lock_file logs/nginx.lock;
+
+pcre_jit on;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
+
+include /etc/nginx/modules-enable/*.conf;
+
+events {
+  use epoll;
+  worker_connections 1024;
+  worker_aio_requests 32;
+  
+  
+  # multi_accept on;
+  accept_mutex off;
+  accept_mutex_delay 500ms;
+  debug_connection 127.0.0.1;
+}
+
+http {
+  # ...
+}
+
+mail {
+  # ...
+}
+
+stream {
+  # ...
+}
+
+google_perftools_profiles /path/to/profile;
+\end{lstlisting}
+
+Nginx的核心指令（core directive）如下：
+
+\begin{compactitem}
+\item accept\_mutex（串行执行worker来接收请求）
+\item accept\_mutex\_delay（串行执行worker延迟）
+\item daemon（持久执行）
+\item debug\_connection
+\item debug\_points
+\item error\_log
+\item env
+\item events
+\item include
+\item load\_module
+\item lock\_file
+\item master\_process
+\item multi\_accept
+\item pcre\_jit
+\item pid
+\item ssl\_engine（SSL硬件加速器）
+\item thread\_pool
+\item timer\_resolution
+\item use
+\item user
+\item worker\_aio\_requests
+\item worker\_connections
+\item worker\_cpu\_affinity
+\item worker\_priority
+\item worker\_processes
+\item worker\_rlimit\_core
+\item worker\_rlimit\_nofile
+\item working\_directory
+\end{compactitem}
+
+
+
+\chapter{accept\_mutex}
+
+当一个新连接到达时，如果激活了accept\_mutex，那么多个Worker将以串行方式来处理，其中有一个Worker会被唤醒，其他的Worker继续保持休眠状态；如果没有激活accept\_mutex，那么所有的Worker都会被唤醒，不过只有一个Worker能获取新连接，其它的Worker会重新进入休眠状态，这就是「惊群问题」。
+
+假设你养了一百只小鸡，现在你有一粒粮食，那么有两种喂食方法：
+
+\begin{compactitem}
+\item 你把这粒粮食直接扔到小鸡中间，一百只小鸡一起上来抢，最终只有一只小鸡能得手，其它九十九只小鸡只能铩羽而归。这就相当于关闭了accept\_mutex。
+\item 你主动抓一只小鸡过来，把这粒粮食塞到它嘴里，其它九十九只小鸡对此浑然不知，该睡觉睡觉。这就相当于激活了accept\_mutex。
+\end{compactitem}
+
+Nginx缺省激活了accept\_mutex，虽然说不会有惊群问题，但是这是一种保守的选择。
+
+Apache动辄就会启动成百上千的进程，如果发生惊群问题的话，影响相对较大；但是对Nginx而言，一般来说，worker\_processes会设置成CPU个数，所以最多也就几十个，即便发生惊群问题的话，影响相对也较小。
+
+即使关闭了accept\_mutex，仍然可能会引起一定程度的惊群问题，表现为上下文切换增多（sar -w）或者负载上升，如果网站访问量比较大，为了系统的吞吐量，还是建议大家关闭accept\_mutex。
+
+修改一下问题的场景，不再只有一粒粮食，而是一盆粮食时，如果仍然采用主动抓小鸡过来塞粮食的做法就太低效了，一盆粮食不知何年何月才能喂完，可以设想一下几十只小鸡排队等着喂食时那种翘首以盼的情景，此时更好的方法是把这盆粮食直接撒到小鸡中间，让它们自己去抢，虽然这可能会造成一定程度的混乱，但是整体的效率无疑大大增强了。
+
+
+
+和激活accept\_mutex 相比，关闭 accept\_mutex 的时候，请求在多个 worker 间的分配更均衡。
+
+\begin{compactitem}
+\item 开启 accept\_mutex 时：
+
+\begin{lstlisting}[language=bash]
+shell> ./ngx-req-distr -m `cat /path/to/nginx.pid`
+Tracing 12970 12971 12972 12974 (/path/to/nginx)...
+Hit Ctrl-C to end.
+^C
+worker 12970:	0 reqs
+worker 12971:	37 reqs
+worker 12972:	127 reqs
+worker 12974:	3 reqs
+\end{lstlisting}
+
+\item 关闭 accept\_mutex 时：
+
+\begin{lstlisting}[language=bash]
+shell> ./ngx-req-distr -m `cat /path/to/nginx.pid`
+Tracing 20433 20434 20435 20436 (/path/to/nginx)...
+Hit Ctrl-C to end.
+^C
+worker 20433:	75 reqs
+worker 20434:	32 reqs
+worker 20435:	29 reqs
+worker 20436:	44 reqs
+\end{lstlisting}
+
+\end{compactitem}
+
+\chapter{accept\_mutex\_delay}
+
+在设置了 \texttt{accept\_mutex on;}后，最好设置下\texttt{accept\_mutex\_delay 50ms;}。
+
+
+
+\chapter{daemon}
+
+
+\chapter{debug\_connection}
+
+
+
+\chapter{debug\_points}
+
+
+\chapter{error\_log}
+
+
+\chapter{env}
+
+
+\chapter{events}
+
+
+\chapter{include}
+
+
+
+\chapter{load\_module}
+
+
+\chapter{lock\_file}
+
+
+
+\chapter{master\_process}
+
+
+\chapter{multi\_accept}
+
+
+multi\_accept 告诉 Nginx 收到一个新连接通知后接受尽可能多的连接。
+
+
+\chapter{pcre\_jit}
+
+
+\chapter{pid}
+
+
+\chapter{ssl\_engine}
+
+
+\chapter{thread\_pool}
+
+
+\chapter{timer\_resolution}
+
+
+\chapter{use}
+
+
+\chapter{user}
+
+
+\chapter{worker\_aio\_requests}
+
+
+\chapter{worker\_connections}
+
+
+\chapter{worker\_cpu\_affinity}
+
+
+\chapter{worker\_priority}
+
+
+\chapter{worker\_processes}
+
+
+\chapter{worker\_rlimit\_core}
+
+
+\chapter{worker\_rlimit\_nofile}
+
+
+\chapter{working\_directory}
+
+
+\chapter{http}
+
+
+\chapter{mail}
+
+
+\chapter{stream}
+
