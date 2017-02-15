@@ -1,1 +1,31 @@
 \part{URL Rewrite}
+
+
+
+\chapter{Overview}
+
+
+URL重写 (URL Rewriting) 是一种REST的相关技术。
+
+在 Web服务器中，URL重写可以针对用户所提供的 URL 进行转换后，再传入 Web服务器中的程序处理器。
+
+\begin{compactitem}
+\item mod\_rewrite、mod\_alias（Apache）
+\item HttpRedirectFilter、UrlRewriteFilter（J2EE）
+\item mod\_rewrite（Lighttpd）
+\end{compactitem}
+
+URL重写最常见的用法就是将一组 URL 层次结构字符串，转换成带有 query string 的 URL，或是反向转换。
+
+\begin{compactitem}
+\item \url{http://www.somebloghost.com/Blogs/Posts.php?Year=2006\&Month=12\&Day=10}经过 URL 重写可以变成\url{http://www.somebloghost.com/Blogs/2006/12/10/}
+
+\item \url{http://www.somehost.com/Blogs/2006/12/}经过URL重写可以变成\url{http://www.somehost.com/Blogs.aspx?year=2006\&month=12}
+\end{compactitem}
+
+URL重写可以让用户使用较直觉的方式来输入 URL（这也是 REST 的主要目的），也是搜索引擎最优化（SEO）的作法之一，同时应用程序开发者可以利用URL重写机制来将参数隐藏起来，尽量避免让网络上的恶意用户收集到有利于发动攻击的信息。
+
+
+
+
+
