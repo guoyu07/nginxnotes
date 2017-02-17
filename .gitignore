@@ -17,7 +17,7 @@
 # these rules might exclude image files for figures etc.
 # *.ps
 # *.eps
-*.pdf
+# *.pdf
 
 ## Bibliography auxiliary files (bibtex/biblatex/biber):
 *.bbl
@@ -106,7 +106,6 @@ acs-*.bib
 
 # minitoc
 *.maf
-<<<<<<< HEAD
 *.mlf
 *.mlt
 *.mtc
@@ -136,7 +135,6 @@ _minted*
 *.sympy
 sympy-plots-for-*.tex/
 
-<<<<<<< HEAD
 # pdfcomment
 *.upa
 *.upb
