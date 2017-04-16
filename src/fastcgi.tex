@@ -2,18 +2,110 @@
 
 \chapter{Overview}
 
+HTTP请求头字段作为参数传递到FastCGI服务器。 
 
+在作为FastCGI服务器运行的应用程序和脚本中，这些参数通常作为环境变量提供。 例如，“User-Agent”头字段作为HTTP\_USER\_AGENT参数传递。
 
-\chapter{ngx\_http\_fastcgi\_module}
-
+除了HTTP请求头字段之外，还可以使用fastcgi\_param指令传递任意参数。
 
 
 \begin{lstlisting}
-
+location / {
+   fastcgi_pass localhost:9000;
+   fastcgi_index index.php;
+   
+   fastcgi_param SCRIPT_FILENAME /home/www/scripts/php$fastcgi_script_name;
+   fastcgi_param QUERY_STRING $query_string;
+   fastcgi_param REQUEST_METHOD $request_method;
+   fastcgi_param CONTENT_TYPE $content_type;
+   fastcgi_param CONTENT_LENGTH $content_length;
+}
 \end{lstlisting}
 
+\chapter{ngx\_http\_fastcgi\_module}
+
+ngx\_http\_fastcgi\_module模块允许将请求传递到FastCGI服务器。
 
 
+ngx\_http\_fastcgi\_module模块支持嵌入式变量，可以使用fastcgi\_param指令设置参数：
+
+\begin{compactitem}
+\item \$fastcgi\_script\_name
+
+\$fastcgi\_script\_name是请求URI，或者是由附加的fastcgi\_index指令配置的索引文件名（如果URI以斜杠结尾）的请求URI。
+
+\$fastcgi\_script\_name变量可用于设置在PHP中确定脚本名称的SCRIPT\_FILENAME和PATH\_TRANSLATED参数。 例如，对于带有以下指令的“/ info /”请求，SCRIPT\_FILENAME参数将等于“/home/www/scripts/php/info/index.php”。
+
+
+\begin{lstlisting}
+fastcgi_index index.php;
+fastcgi_param SCRIPT_FILENAME /home/www/scripts/php$fastcgi_script_name;
+\end{lstlisting}
+
+当使用fastcgi\_split\_path\_info指令时，\$fastcgi\_script\_name变量等于指令的第一个捕获集的值。
+
+
+\item \$fastcgi\_path\_info
+
+第二个捕获的值由fastcgi\_split\_path\_info指令设置。 此变量可用于设置PATH\_INFO参数。
+\end{compactitem}
+
+\chapter{Directive}
+
+
+
+\section{fastcgi\_bind}
+
+
+
+\section{fastcgi\_buffer\_size}
+\section{fastcgi\_buffering}
+\section{fastcgi\_buffers}
+\section{fastcgi\_busy\_buffers\_size}
+\section{fastcgi\_cache}
+\section{fastcgi\_cache\_background\_update}
+\section{fastcgi\_cache\_bypass}
+\section{fastcgi\_cache\_key}
+\section{fastcgi\_cache\_lock}
+\section{fastcgi\_cache\_lock\_age}
+\section{fastcgi\_cache\_lock\_timeout}
+\section{fastcgi\_cache\_max\_range\_offset}
+\section{fastcgi\_cache\_methods}
+\section{fastcgi\_cache\_min\_uses}
+\section{fastcgi\_cache\_path}
+\section{fastcgi\_cache\_purge}
+\section{fastcgi\_cache\_revalidate}
+\section{fastcgi\_cache\_use\_stale}
+\section{fastcgi\_cache\_valid}
+\section{fastcgi\_catch\_stderr}
+\section{fastcgi\_connect\_timeout}
+\section{fastcgi\_force\_ranges}
+\section{fastcgi\_hide\_header}
+\section{fastcgi\_ignore\_client\_abort}
+\section{fastcgi\_ignore\_headers}
+\section{fastcgi\_index}
+\section{fastcgi\_intercept\_errors}
+\section{fastcgi\_keep\_conn}
+\section{fastcgi\_limit\_rate}
+\section{fastcgi\_max\_temp\_file\_size}
+\section{fastcgi\_next\_upstream}
+\section{fastcgi\_next\_upstream\_timeout}
+\section{fastcgi\_next\_upstream\_tries}
+\section{fastcgi\_no\_cache}
+\section{fastcgi\_param}
+\section{fastcgi\_pass}
+\section{fastcgi\_pass\_header}
+\section{fastcgi\_pass\_request\_body}
+\section{fastcgi\_pass\_request\_headers}
+\section{fastcgi\_read\_timeout}
+\section{fastcgi\_request\_buffering}
+\section{fastcgi\_send\_lowat}
+\section{fastcgi\_send\_timeout}
+\section{fastcgi\_split\_path\_info}
+\section{fastcgi\_store}
+\section{fastcgi\_store\_access}
+\section{fastcgi\_temp\_file\_write\_size}
+\section{fastcgi\_temp\_path}
 
 \begin{lstlisting}
 

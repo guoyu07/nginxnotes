@@ -1,4 +1,3 @@
 # nginxnotes
-=======
 
 nginx notes
